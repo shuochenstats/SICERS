@@ -1,0 +1,577 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>tables</title><meta name="generator" content="MATLAB 9.7"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-07-05"><meta name="DC.source" content="tables.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">initialization</a></li><li><a href="#4">load tests and calculation of the statistics</a></li><li><a href="#5">NBS</a></li><li><a href="#6">Louvain</a></li><li><a href="#7">SICERS</a></li><li><a href="#8">greedy</a></li><li><a href="#9">FDRBH</a></li></ul></div><pre class="codeinput"><span class="comment">% Demonstration of the comparison between SICERS and other methods in the</span>
+<span class="comment">% table</span>
+<span class="comment">% To run the complete tests, set M = 100 and n_run = 100, it might take</span>
+<span class="comment">% many hours to days depending on the PC configurations. To demonstrate, we</span>
+<span class="comment">% set M = 5, n_run = 5</span>
+</pre><pre class="codeinput">clc;clear;close <span class="string">all</span>
+<span class="comment">% rng(123);</span>
+cluster_size = [50 25];
+mu1 = 1;
+n = 120;
+
+
+
+scenario = <span class="string">'2'</span>;
+
+<span class="keyword">if</span> scenario == <span class="string">'1'</span>
+
+    sigma = 1/2;
+    d_in_ratio = 0;
+    d_out_ratio = 1;
+    bet_noise = 0;
+    p0 = [0 sigma];
+<span class="keyword">elseif</span> scenario == <span class="string">'2'</span>
+    sigma = 1/1.2;
+    d_in_ratio = 0.05;
+    d_out_ratio = 0.95;
+    bet_noise = 0;
+    p0 = [0 sigma];
+<span class="keyword">elseif</span> scenario == <span class="string">'3'</span>
+    sigma = 1/0.8;
+    d_in_ratio = 0.05;
+    d_out_ratio = 0.95;
+    bet_noise = 1;
+    p0 = [0 sigma];
+<span class="keyword">end</span>
+</pre><h2 id="3">initialization</h2><pre class="codeinput">show = 1;
+parameters = struct(<span class="string">'mu0'</span>, p0(1),<span class="string">'mu1'</span>, mu1, <span class="keyword">...</span>
+    <span class="string">'sigma0'</span>, p0(2), <span class="string">'sigma1'</span>, sigma, <span class="string">'cluster_size'</span>,  cluster_size, <span class="string">'num_clusters'</span>,length(cluster_size),<span class="string">'ctrl_num'</span>, n, <span class="string">'case_num'</span>, n,<span class="keyword">...</span>
+    <span class="string">'N'</span>, 200, <span class="string">'d_in_ratio'</span>, d_in_ratio, <span class="string">'d_out_ratio'</span>, d_out_ratio);
+M = 10; SAVE = 0;
+n_run = 10;
+res_Louvain = {};
+res_SICERS = {};
+res_NBS = {};
+res_greedy = {};
+tic
+<span class="keyword">for</span> i = 1:n_run
+    disp([<span class="string">'running the '</span>, num2str(i),<span class="string">'-th job'</span>] )
+    test_summary1= test_summary_Louvain_NBS_SICERS(parameters, show, M, bet_noise);
+    res_Louvain{i}  =test_summary1.Louvain;
+    res_NBS{i} =test_summary1.NBS;
+    res_SICERS{i} =test_summary1.SICERS;
+    res_greedy{i} =test_summary1.greedy;
+    res_FDRBH{i}  =test_summary1.FDRBH;
+<span class="keyword">end</span>
+
+toc
+<span class="keyword">if</span> SAVE == 1
+    FileName = [<span class="string">'cluster_size_'</span>,num2str(cluster_size),<span class="string">'samplesize_'</span>,num2str(n),<span class="string">'_scenario_'</span>,scenario,<span class="string">'_NBS'</span>,<span class="string">'.mat'</span>];
+    matfile = fullfile(<span class="string">'data'</span>, FileName);
+    save(matfile, <span class="string">'res_NBS'</span>);
+    FileName = [<span class="string">'cluster_size_'</span>,num2str(cluster_size),<span class="string">'samplesize_'</span>,num2str(n),<span class="string">'_scenario_'</span>,scenario,<span class="string">'_Louvain'</span>,<span class="string">'.mat'</span>];
+    matfile = fullfile(<span class="string">'data'</span>, FileName);
+    save(matfile, <span class="string">'res_Louvain'</span>);
+    FileName = [<span class="string">'cluster_size_'</span>,num2str(cluster_size),<span class="string">'samplesize_'</span>,num2str(n),<span class="string">'_scenario_'</span>,scenario,<span class="string">'_SICERS'</span>,<span class="string">'.mat'</span>];
+    matfile = fullfile(<span class="string">'data'</span>, FileName);
+    save(matfile, <span class="string">'res_SICERS'</span>);
+    FileName = [<span class="string">'cluster_size_'</span>,num2str(cluster_size),<span class="string">'samplesize_'</span>,num2str(n),<span class="string">'_scenario_'</span>,scenario,<span class="string">'_greedy'</span>,<span class="string">'.mat'</span>];
+    matfile = fullfile(<span class="string">'data'</span>, FileName);
+    save(matfile, <span class="string">'res_greedy'</span>);
+    FileName = [<span class="string">'cluster_size_'</span>,num2str(cluster_size),<span class="string">'samplesize_'</span>,num2str(n),<span class="string">'_scenario_'</span>,scenario,<span class="string">'_FDRBH'</span>,<span class="string">'.mat'</span>];
+    matfile = fullfile(<span class="string">'data'</span>, FileName);
+    save(matfile, <span class="string">'res_FDRBH'</span>);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">running the 1-th job
+running the 2-th job
+running the 3-th job
+running the 4-th job
+running the 5-th job
+running the 6-th job
+running the 7-th job
+running the 8-th job
+running the 9-th job
+running the 10-th job
+Elapsed time is 67.603412 seconds.
+</pre><img vspace="5" hspace="5" src="tables_01.png" alt=""> <img vspace="5" hspace="5" src="tables_02.png" alt=""> <img vspace="5" hspace="5" src="tables_03.png" alt=""> <img vspace="5" hspace="5" src="tables_04.png" alt=""> <img vspace="5" hspace="5" src="tables_05.png" alt=""> <img vspace="5" hspace="5" src="tables_06.png" alt=""> <img vspace="5" hspace="5" src="tables_07.png" alt=""> <img vspace="5" hspace="5" src="tables_08.png" alt=""> <img vspace="5" hspace="5" src="tables_09.png" alt=""> <img vspace="5" hspace="5" src="tables_10.png" alt=""> <h2 id="4">load tests and calculation of the statistics</h2><h2 id="5">NBS</h2><pre class="codeinput">cluster1_power_NBS = [];
+cluster2_power_NBS = [];
+network_FDR_NBS = [];
+edge_power_cluster1_NBS = [];
+edge_power_cluster2_NBS = [];
+edge_FDR_cluster1_NBS = [];
+edge_FDR_cluster2_NBS = [];
+
+<span class="keyword">for</span> i = 1:length(res_NBS)
+    temp_struct = res_NBS{i}.inference_NBS;
+    cluster1_power_NBS = [cluster1_power_NBS;  isfield(temp_struct,<span class="string">'cluster_1'</span>)];
+    cluster2_power_NBS = [cluster2_power_NBS;  isfield(temp_struct,<span class="string">'cluster_2'</span>)];
+    network_FDR_NBS = [network_FDR_NBS; temp_struct.FP_ntwk/(temp_struct.FP_ntwk+temp_struct.TP_ntwk)];
+    <span class="keyword">if</span> isfield(temp_struct,<span class="string">'cluster_1'</span>)
+        edge_power_cluster1_NBS = [edge_power_cluster1_NBS; temp_struct.cluster_1.TPR];
+        edge_FDR_cluster1_NBS = [edge_FDR_cluster1_NBS; temp_struct.cluster_1.FDR];
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isfield(temp_struct,<span class="string">'cluster_2'</span>)
+        edge_power_cluster2_NBS = [edge_power_cluster2_NBS; temp_struct.cluster_2.TPR];
+        edge_FDR_cluster2_NBS = [edge_FDR_cluster2_NBS; temp_struct.cluster_2.FDR];
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">for</span> i = 1:length(res_NBS)
+    mean_cluster1_power_NBS = mean(cluster1_power_NBS);
+    sd_cluster1_power_NBS =std(cluster1_power_NBS);
+    mean_cluster2_power_NBS = mean(cluster2_power_NBS);
+    sd_cluster2_power_NBS =std(cluster2_power_NBS);
+    mean_network_FDR_NBS = mean(network_FDR_NBS );
+    sd_network_FDR_NBS = std(network_FDR_NBS);
+    mean_edge_power_cluster1_NBS = mean( edge_power_cluster1_NBS);
+    sd_edge_power_cluster1_NBS = std( edge_power_cluster1_NBS);
+    mean_edge_power_cluster2_NBS = mean( edge_power_cluster2_NBS);
+    sd_edge_power_cluster2_NBS = std( edge_power_cluster2_NBS);
+    mean_edge_FDR_cluster1_NBS = mean( edge_FDR_cluster1_NBS);
+    sd_edge_FDR_cluster1_NBS = std( edge_FDR_cluster1_NBS);
+    mean_edge_FDR_cluster2_NBS = mean( edge_FDR_cluster2_NBS);
+    sd_edge_FDR_cluster2_NBS = std( edge_FDR_cluster2_NBS);
+<span class="keyword">end</span>
+</pre><h2 id="6">Louvain</h2><pre class="codeinput">cluster1_power_Louvain = [];
+cluster2_power_Louvain = [];
+network_FDR_Louvain = [];
+edge_power_cluster1_Louvain = [];
+edge_power_cluster2_Louvain = [];
+edge_FDR_cluster1_Louvain = [];
+edge_FDR_cluster2_Louvain = [];
+
+
+<span class="keyword">for</span> i = 1:length(res_Louvain)
+    temp_struct = res_Louvain{i}.inference_Louvain;
+    cluster1_power_Louvain = [cluster1_power_Louvain;  isfield(temp_struct,<span class="string">'cluster_1'</span>)];
+    cluster2_power_Louvain = [cluster2_power_Louvain;  isfield(temp_struct,<span class="string">'cluster_2'</span>)];
+    network_FDR_Louvain = [network_FDR_Louvain; temp_struct.FP_ntwk/(temp_struct.FP_ntwk+temp_struct.TP_ntwk)];
+    <span class="keyword">if</span> isfield(temp_struct,<span class="string">'cluster_1'</span>)
+        edge_power_cluster1_Louvain = [edge_power_cluster1_Louvain; temp_struct.cluster_1.TPR];
+        edge_FDR_cluster1_Louvain = [edge_FDR_cluster1_Louvain; temp_struct.cluster_1.FDR];
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isfield(temp_struct,<span class="string">'cluster_2'</span>)
+        edge_power_cluster2_Louvain = [edge_power_cluster2_Louvain; temp_struct.cluster_2.TPR];
+        edge_FDR_cluster2_Louvain = [edge_FDR_cluster2_Louvain; temp_struct.cluster_2.FDR];
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">for</span> i = 1:length(res_Louvain)
+    mean_cluster1_power_Louvain = mean(cluster1_power_Louvain);
+    sd_cluster1_power_Louvain =std(cluster1_power_Louvain);
+    mean_cluster2_power_Louvain = mean(cluster2_power_Louvain);
+    sd_cluster2_power_Louvain =std(cluster2_power_Louvain);
+    mean_network_FDR_Louvain = mean(network_FDR_Louvain );
+    sd_network_FDR_Louvain = std(network_FDR_Louvain);
+    mean_edge_power_cluster1_Louvain = mean( edge_power_cluster1_Louvain);
+    sd_edge_power_cluster1_Louvain = std( edge_power_cluster1_Louvain);
+    mean_edge_power_cluster2_Louvain = mean( edge_power_cluster2_Louvain);
+    sd_edge_power_cluster2_Louvain = std( edge_power_cluster2_Louvain);
+    mean_edge_FDR_cluster1_Louvain  = mean( edge_FDR_cluster1_Louvain );
+    sd_edge_FDR_cluster1_Louvain = std( edge_FDR_cluster1_Louvain );
+    mean_edge_FDR_cluster2_Louvain  = mean( edge_FDR_cluster2_Louvain );
+    sd_edge_FDR_cluster2_Louvain = std( edge_FDR_cluster2_Louvain );
+
+<span class="keyword">end</span>
+</pre><h2 id="7">SICERS</h2><pre class="codeinput">cluster1_power_SICERS = [];
+cluster2_power_SICERS = [];
+network_FDR_SICERS = [];
+edge_power_cluster1_SICERS = [];
+edge_power_cluster2_SICERS = [];
+edge_FDR_cluster1_SICERS = [];
+edge_FDR_cluster2_SICERS = [];
+
+
+<span class="keyword">for</span> i = 1:length(res_SICERS)
+    temp_struct = res_SICERS{i}.inference_SICERS;
+    cluster1_power_SICERS = [cluster1_power_SICERS;  isfield(temp_struct,<span class="string">'cluster_1'</span>)];
+    cluster2_power_SICERS = [cluster2_power_SICERS;  isfield(temp_struct,<span class="string">'cluster_2'</span>)];
+    network_FDR_SICERS = [network_FDR_SICERS temp_struct.FP_ntwk/(temp_struct.FP_ntwk+temp_struct.TP_ntwk)];
+    <span class="keyword">if</span> isfield(temp_struct,<span class="string">'cluster_1'</span>)
+        edge_power_cluster1_SICERS = [edge_power_cluster1_SICERS; temp_struct.cluster_1.TPR];
+        edge_FDR_cluster1_SICERS = [edge_FDR_cluster1_SICERS; temp_struct.cluster_1.FDR];
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isfield(temp_struct,<span class="string">'cluster_2'</span>)
+        edge_power_cluster2_SICERS = [edge_power_cluster2_SICERS; temp_struct.cluster_2.TPR];
+        edge_FDR_cluster2_SICERS = [edge_FDR_cluster2_SICERS; temp_struct.cluster_2.FDR];
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">for</span> i = 1:length(res_SICERS)
+    mean_cluster1_power_SICERS = mean(cluster1_power_SICERS);
+    sd_cluster1_power_SICERS =std(cluster1_power_SICERS);
+    mean_cluster2_power_SICERS = mean(cluster2_power_SICERS);
+    sd_cluster2_power_SICERS =std(cluster2_power_SICERS);
+    mean_network_FDR_SICERS = mean(network_FDR_SICERS );
+    sd_network_FDR_SICERS = std(network_FDR_SICERS);
+    mean_edge_power_cluster1_SICERS = mean( edge_power_cluster1_SICERS);
+    sd_edge_power_cluster1_SICERS = std( edge_power_cluster1_SICERS);
+    mean_edge_power_cluster2_SICERS = mean( edge_power_cluster2_SICERS);
+    sd_edge_power_cluster2_SICERS = std( edge_power_cluster2_SICERS);
+    mean_edge_FDR_cluster1_SICERS  = mean( edge_FDR_cluster1_SICERS );
+    sd_edge_FDR_cluster1_SICERS = std( edge_FDR_cluster1_SICERS );
+    mean_edge_FDR_cluster2_SICERS  = mean( edge_FDR_cluster2_SICERS );
+    sd_edge_FDR_cluster2_SICERS = std( edge_FDR_cluster2_SICERS );
+
+<span class="keyword">end</span>
+</pre><h2 id="8">greedy</h2><pre class="codeinput">cluster1_power_greedy = [];
+cluster2_power_greedy = [];
+network_FDR_greedy = [];
+edge_power_cluster1_greedy = [];
+edge_power_cluster2_greedy = [];
+edge_FDR_cluster1_greedy = [];
+edge_FDR_cluster2_greedy = [];
+
+<span class="keyword">for</span> i = 1:length(res_greedy)
+    temp_struct = res_greedy{i}.inference_greedy;
+    cluster1_power_greedy = [cluster1_power_greedy;  isfield(temp_struct,<span class="string">'cluster_1'</span>)];
+    cluster2_power_greedy = [cluster2_power_greedy;  isfield(temp_struct,<span class="string">'cluster_2'</span>)];
+    network_FDR_greedy = [network_FDR_greedy; temp_struct.FP_ntwk/(temp_struct.FP_ntwk+temp_struct.TP_ntwk)];
+    <span class="keyword">if</span> isfield(temp_struct,<span class="string">'cluster_1'</span>)
+        edge_power_cluster1_greedy = [edge_power_cluster1_greedy; temp_struct.cluster_1.TPR];
+        edge_FDR_cluster1_greedy = [edge_FDR_cluster1_greedy; temp_struct.cluster_1.FDR];
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isfield(temp_struct,<span class="string">'cluster_2'</span>)
+        edge_power_cluster2_greedy = [edge_power_cluster2_greedy; temp_struct.cluster_2.TPR];
+        edge_FDR_cluster2_greedy = [edge_FDR_cluster2_greedy; temp_struct.cluster_2.FDR];
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">for</span> i = 1:length(res_greedy)
+    mean_cluster1_power_greedy = mean(cluster1_power_greedy);
+    sd_cluster1_power_greedy =std(cluster1_power_greedy);
+    mean_cluster2_power_greedy = mean(cluster2_power_greedy);
+    sd_cluster2_power_greedy =std(cluster2_power_greedy);
+    mean_network_FDR_greedy = mean(network_FDR_greedy );
+    sd_network_FDR_greedy = std(network_FDR_greedy);
+    mean_edge_power_cluster1_greedy = mean( edge_power_cluster1_greedy);
+    sd_edge_power_cluster1_greedy = std( edge_power_cluster1_greedy);
+    mean_edge_power_cluster2_greedy = mean( edge_power_cluster2_greedy);
+    sd_edge_power_cluster2_greedy = std( edge_power_cluster2_greedy);
+    mean_edge_FDR_cluster1_greedy = mean( edge_FDR_cluster1_greedy);
+    sd_edge_FDR_cluster1_greedy = std( edge_FDR_cluster1_greedy);
+    mean_edge_FDR_cluster2_greedy = mean( edge_FDR_cluster2_greedy);
+    sd_edge_FDR_cluster2_greedy = std( edge_FDR_cluster2_greedy);
+<span class="keyword">end</span>
+</pre><h2 id="9">FDRBH</h2><pre class="codeinput">edge_power_FDRBH = [];
+edge_FDR_FDRBH = [];
+
+<span class="keyword">for</span> i = 1:length(res_greedy)
+    temp_struct = res_greedy{i}.inference_greedy;
+    edge_power_FDRBH = [edge_power_FDRBH;  res_FDRBH{i}.power];
+    edge_FDR_FDRBH = [edge_FDR_FDRBH;  res_FDRBH{i}.FDR];
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% Demonstration of the comparison between SICERS and other methods in the
+% table
+% To run the complete tests, set M = 100 and n_run = 100, it might take
+% many hours to days depending on the PC configurations. To demonstrate, we
+% set M = 5, n_run = 5
+%%
+clc;clear;close all
+% rng(123);
+cluster_size = [50 25];
+mu1 = 1;
+n = 120;
+
+
+
+scenario = '2';
+
+if scenario == '1'
+    
+    sigma = 1/2;
+    d_in_ratio = 0;
+    d_out_ratio = 1;
+    bet_noise = 0;
+    p0 = [0 sigma];
+elseif scenario == '2'
+    sigma = 1/1.2;
+    d_in_ratio = 0.05;
+    d_out_ratio = 0.95;
+    bet_noise = 0;
+    p0 = [0 sigma];
+elseif scenario == '3'
+    sigma = 1/0.8;
+    d_in_ratio = 0.05;
+    d_out_ratio = 0.95;
+    bet_noise = 1;
+    p0 = [0 sigma];
+end
+
+%% initialization
+show = 1;
+parameters = struct('mu0', p0(1),'mu1', mu1, ...
+    'sigma0', p0(2), 'sigma1', sigma, 'cluster_size',  cluster_size, 'num_clusters',length(cluster_size),'ctrl_num', n, 'case_num', n,...
+    'N', 200, 'd_in_ratio', d_in_ratio, 'd_out_ratio', d_out_ratio);
+M = 10; SAVE = 0;
+n_run = 10;
+res_Louvain = {};
+res_SICERS = {};
+res_NBS = {};
+res_greedy = {};
+tic
+for i = 1:n_run
+    disp(['running the ', num2str(i),'-th job'] )
+    test_summary1= test_summary_Louvain_NBS_SICERS(parameters, show, M, bet_noise);
+    res_Louvain{i}  =test_summary1.Louvain;
+    res_NBS{i} =test_summary1.NBS;
+    res_SICERS{i} =test_summary1.SICERS;
+    res_greedy{i} =test_summary1.greedy;
+    res_FDRBH{i}  =test_summary1.FDRBH;
+end
+
+toc
+if SAVE == 1
+    FileName = ['cluster_size_',num2str(cluster_size),'samplesize_',num2str(n),'_scenario_',scenario,'_NBS','.mat'];
+    matfile = fullfile('data', FileName);
+    save(matfile, 'res_NBS');
+    FileName = ['cluster_size_',num2str(cluster_size),'samplesize_',num2str(n),'_scenario_',scenario,'_Louvain','.mat'];
+    matfile = fullfile('data', FileName);
+    save(matfile, 'res_Louvain');
+    FileName = ['cluster_size_',num2str(cluster_size),'samplesize_',num2str(n),'_scenario_',scenario,'_SICERS','.mat'];
+    matfile = fullfile('data', FileName);
+    save(matfile, 'res_SICERS');
+    FileName = ['cluster_size_',num2str(cluster_size),'samplesize_',num2str(n),'_scenario_',scenario,'_greedy','.mat'];
+    matfile = fullfile('data', FileName);
+    save(matfile, 'res_greedy');
+    FileName = ['cluster_size_',num2str(cluster_size),'samplesize_',num2str(n),'_scenario_',scenario,'_FDRBH','.mat'];
+    matfile = fullfile('data', FileName);
+    save(matfile, 'res_FDRBH');
+end
+
+%% load tests and calculation of the statistics
+%% NBS
+cluster1_power_NBS = [];
+cluster2_power_NBS = [];
+network_FDR_NBS = [];
+edge_power_cluster1_NBS = [];
+edge_power_cluster2_NBS = [];
+edge_FDR_cluster1_NBS = [];
+edge_FDR_cluster2_NBS = [];
+
+for i = 1:length(res_NBS)
+    temp_struct = res_NBS{i}.inference_NBS;
+    cluster1_power_NBS = [cluster1_power_NBS;  isfield(temp_struct,'cluster_1')];
+    cluster2_power_NBS = [cluster2_power_NBS;  isfield(temp_struct,'cluster_2')];
+    network_FDR_NBS = [network_FDR_NBS; temp_struct.FP_ntwk/(temp_struct.FP_ntwk+temp_struct.TP_ntwk)];
+    if isfield(temp_struct,'cluster_1')
+        edge_power_cluster1_NBS = [edge_power_cluster1_NBS; temp_struct.cluster_1.TPR];
+        edge_FDR_cluster1_NBS = [edge_FDR_cluster1_NBS; temp_struct.cluster_1.FDR];
+    end
+    if isfield(temp_struct,'cluster_2')
+        edge_power_cluster2_NBS = [edge_power_cluster2_NBS; temp_struct.cluster_2.TPR];
+        edge_FDR_cluster2_NBS = [edge_FDR_cluster2_NBS; temp_struct.cluster_2.FDR];
+    end
+end
+
+for i = 1:length(res_NBS)
+    mean_cluster1_power_NBS = mean(cluster1_power_NBS);
+    sd_cluster1_power_NBS =std(cluster1_power_NBS);
+    mean_cluster2_power_NBS = mean(cluster2_power_NBS);
+    sd_cluster2_power_NBS =std(cluster2_power_NBS);
+    mean_network_FDR_NBS = mean(network_FDR_NBS );
+    sd_network_FDR_NBS = std(network_FDR_NBS);
+    mean_edge_power_cluster1_NBS = mean( edge_power_cluster1_NBS);
+    sd_edge_power_cluster1_NBS = std( edge_power_cluster1_NBS);
+    mean_edge_power_cluster2_NBS = mean( edge_power_cluster2_NBS);
+    sd_edge_power_cluster2_NBS = std( edge_power_cluster2_NBS);
+    mean_edge_FDR_cluster1_NBS = mean( edge_FDR_cluster1_NBS);
+    sd_edge_FDR_cluster1_NBS = std( edge_FDR_cluster1_NBS);
+    mean_edge_FDR_cluster2_NBS = mean( edge_FDR_cluster2_NBS);
+    sd_edge_FDR_cluster2_NBS = std( edge_FDR_cluster2_NBS);
+end
+%% Louvain
+cluster1_power_Louvain = [];
+cluster2_power_Louvain = [];
+network_FDR_Louvain = [];
+edge_power_cluster1_Louvain = [];
+edge_power_cluster2_Louvain = [];
+edge_FDR_cluster1_Louvain = [];
+edge_FDR_cluster2_Louvain = [];
+
+
+for i = 1:length(res_Louvain)
+    temp_struct = res_Louvain{i}.inference_Louvain;
+    cluster1_power_Louvain = [cluster1_power_Louvain;  isfield(temp_struct,'cluster_1')];
+    cluster2_power_Louvain = [cluster2_power_Louvain;  isfield(temp_struct,'cluster_2')];
+    network_FDR_Louvain = [network_FDR_Louvain; temp_struct.FP_ntwk/(temp_struct.FP_ntwk+temp_struct.TP_ntwk)];
+    if isfield(temp_struct,'cluster_1')
+        edge_power_cluster1_Louvain = [edge_power_cluster1_Louvain; temp_struct.cluster_1.TPR];
+        edge_FDR_cluster1_Louvain = [edge_FDR_cluster1_Louvain; temp_struct.cluster_1.FDR];
+    end
+    if isfield(temp_struct,'cluster_2')
+        edge_power_cluster2_Louvain = [edge_power_cluster2_Louvain; temp_struct.cluster_2.TPR];
+        edge_FDR_cluster2_Louvain = [edge_FDR_cluster2_Louvain; temp_struct.cluster_2.FDR];
+    end
+end
+
+for i = 1:length(res_Louvain)
+    mean_cluster1_power_Louvain = mean(cluster1_power_Louvain);
+    sd_cluster1_power_Louvain =std(cluster1_power_Louvain);
+    mean_cluster2_power_Louvain = mean(cluster2_power_Louvain);
+    sd_cluster2_power_Louvain =std(cluster2_power_Louvain);
+    mean_network_FDR_Louvain = mean(network_FDR_Louvain );
+    sd_network_FDR_Louvain = std(network_FDR_Louvain);
+    mean_edge_power_cluster1_Louvain = mean( edge_power_cluster1_Louvain);
+    sd_edge_power_cluster1_Louvain = std( edge_power_cluster1_Louvain);
+    mean_edge_power_cluster2_Louvain = mean( edge_power_cluster2_Louvain);
+    sd_edge_power_cluster2_Louvain = std( edge_power_cluster2_Louvain);
+    mean_edge_FDR_cluster1_Louvain  = mean( edge_FDR_cluster1_Louvain );
+    sd_edge_FDR_cluster1_Louvain = std( edge_FDR_cluster1_Louvain );
+    mean_edge_FDR_cluster2_Louvain  = mean( edge_FDR_cluster2_Louvain );
+    sd_edge_FDR_cluster2_Louvain = std( edge_FDR_cluster2_Louvain );
+    
+end
+%% SICERS
+cluster1_power_SICERS = [];
+cluster2_power_SICERS = [];
+network_FDR_SICERS = [];
+edge_power_cluster1_SICERS = [];
+edge_power_cluster2_SICERS = [];
+edge_FDR_cluster1_SICERS = [];
+edge_FDR_cluster2_SICERS = [];
+
+
+for i = 1:length(res_SICERS)
+    temp_struct = res_SICERS{i}.inference_SICERS;
+    cluster1_power_SICERS = [cluster1_power_SICERS;  isfield(temp_struct,'cluster_1')];
+    cluster2_power_SICERS = [cluster2_power_SICERS;  isfield(temp_struct,'cluster_2')];
+    network_FDR_SICERS = [network_FDR_SICERS temp_struct.FP_ntwk/(temp_struct.FP_ntwk+temp_struct.TP_ntwk)];
+    if isfield(temp_struct,'cluster_1')
+        edge_power_cluster1_SICERS = [edge_power_cluster1_SICERS; temp_struct.cluster_1.TPR];
+        edge_FDR_cluster1_SICERS = [edge_FDR_cluster1_SICERS; temp_struct.cluster_1.FDR];
+    end
+    if isfield(temp_struct,'cluster_2')
+        edge_power_cluster2_SICERS = [edge_power_cluster2_SICERS; temp_struct.cluster_2.TPR];
+        edge_FDR_cluster2_SICERS = [edge_FDR_cluster2_SICERS; temp_struct.cluster_2.FDR];
+    end
+end
+
+for i = 1:length(res_SICERS)
+    mean_cluster1_power_SICERS = mean(cluster1_power_SICERS);
+    sd_cluster1_power_SICERS =std(cluster1_power_SICERS);
+    mean_cluster2_power_SICERS = mean(cluster2_power_SICERS);
+    sd_cluster2_power_SICERS =std(cluster2_power_SICERS);
+    mean_network_FDR_SICERS = mean(network_FDR_SICERS );
+    sd_network_FDR_SICERS = std(network_FDR_SICERS);
+    mean_edge_power_cluster1_SICERS = mean( edge_power_cluster1_SICERS);
+    sd_edge_power_cluster1_SICERS = std( edge_power_cluster1_SICERS);
+    mean_edge_power_cluster2_SICERS = mean( edge_power_cluster2_SICERS);
+    sd_edge_power_cluster2_SICERS = std( edge_power_cluster2_SICERS);
+    mean_edge_FDR_cluster1_SICERS  = mean( edge_FDR_cluster1_SICERS );
+    sd_edge_FDR_cluster1_SICERS = std( edge_FDR_cluster1_SICERS );
+    mean_edge_FDR_cluster2_SICERS  = mean( edge_FDR_cluster2_SICERS );
+    sd_edge_FDR_cluster2_SICERS = std( edge_FDR_cluster2_SICERS );
+    
+end
+%% greedy
+cluster1_power_greedy = [];
+cluster2_power_greedy = [];
+network_FDR_greedy = [];
+edge_power_cluster1_greedy = [];
+edge_power_cluster2_greedy = [];
+edge_FDR_cluster1_greedy = [];
+edge_FDR_cluster2_greedy = [];
+
+for i = 1:length(res_greedy)
+    temp_struct = res_greedy{i}.inference_greedy;
+    cluster1_power_greedy = [cluster1_power_greedy;  isfield(temp_struct,'cluster_1')];
+    cluster2_power_greedy = [cluster2_power_greedy;  isfield(temp_struct,'cluster_2')];
+    network_FDR_greedy = [network_FDR_greedy; temp_struct.FP_ntwk/(temp_struct.FP_ntwk+temp_struct.TP_ntwk)];
+    if isfield(temp_struct,'cluster_1')
+        edge_power_cluster1_greedy = [edge_power_cluster1_greedy; temp_struct.cluster_1.TPR];
+        edge_FDR_cluster1_greedy = [edge_FDR_cluster1_greedy; temp_struct.cluster_1.FDR];
+    end
+    if isfield(temp_struct,'cluster_2')
+        edge_power_cluster2_greedy = [edge_power_cluster2_greedy; temp_struct.cluster_2.TPR];
+        edge_FDR_cluster2_greedy = [edge_FDR_cluster2_greedy; temp_struct.cluster_2.FDR];
+    end
+end
+
+for i = 1:length(res_greedy)
+    mean_cluster1_power_greedy = mean(cluster1_power_greedy);
+    sd_cluster1_power_greedy =std(cluster1_power_greedy);
+    mean_cluster2_power_greedy = mean(cluster2_power_greedy);
+    sd_cluster2_power_greedy =std(cluster2_power_greedy);
+    mean_network_FDR_greedy = mean(network_FDR_greedy );
+    sd_network_FDR_greedy = std(network_FDR_greedy);
+    mean_edge_power_cluster1_greedy = mean( edge_power_cluster1_greedy);
+    sd_edge_power_cluster1_greedy = std( edge_power_cluster1_greedy);
+    mean_edge_power_cluster2_greedy = mean( edge_power_cluster2_greedy);
+    sd_edge_power_cluster2_greedy = std( edge_power_cluster2_greedy);
+    mean_edge_FDR_cluster1_greedy = mean( edge_FDR_cluster1_greedy);
+    sd_edge_FDR_cluster1_greedy = std( edge_FDR_cluster1_greedy);
+    mean_edge_FDR_cluster2_greedy = mean( edge_FDR_cluster2_greedy);
+    sd_edge_FDR_cluster2_greedy = std( edge_FDR_cluster2_greedy);
+end
+%% FDRBH
+edge_power_FDRBH = [];
+edge_FDR_FDRBH = [];
+
+for i = 1:length(res_greedy)
+    temp_struct = res_greedy{i}.inference_greedy;
+    edge_power_FDRBH = [edge_power_FDRBH;  res_FDRBH{i}.power];
+    edge_FDR_FDRBH = [edge_FDR_FDRBH;  res_FDRBH{i}.FDR];
+end
+##### SOURCE END #####
+--></body></html>

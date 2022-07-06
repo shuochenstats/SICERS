@@ -1,0 +1,261 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>GLEN network detection and testing</title><meta name="generator" content="MATLAB 9.7"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-07-05"><meta name="DC.source" content="example_code2.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>GLEN network detection and testing</h1><!--introduction--><p>Network object oriented statistics method is a new appraoch to detect and test hidden phenotype related connectivity patterns at the "network" level.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Step 1: Community detection</a></li><li><a href="#2">Step 2: Testing community subnetwork</a></li><li><a href="#3">Step 3: Refine detected community subnetwork, (refined topological structure)</a></li><li><a href="#4">Step 4: Tesing refined topological structure</a></li><li><a href="#5">Summary: we detected a hidden disease related subnetwork with oraganized topological structure (k-partite).</a></li></ul></div><h2 id="1">Step 1: Community detection</h2><pre class="codeinput">    load(<span class="string">'data.mat'</span>)
+    <span class="comment">% load the connectivity data for 60 subjects which include 30 cases and</span>
+    <span class="comment">% 30 matched controls. The first 90 AAL regions are used, and there are 4005 (90*(90-1)/2) edges</span>
+    <span class="comment">% for each subject. Each edge is continuous metric/number, e.g. Fisher's Z transformed correlation coefficients.</span>
+
+    <span class="comment">%Step 1.1 two sample test on each edge</span>
+
+    [h1,p1]=ttest2(casedata_cor,ctrldata_cor); <span class="comment">% here we simply use t-tests, but nonparametric tests could be used as well.</span>
+    <span class="comment">%p1 is a vector of testing p-values</span>
+
+    W1=squareform(-log(p1)); <span class="comment">% -log tranfom of p-values, thus a larger value indicates more group-wise difference.</span>
+
+    <span class="comment">% Input data:the heatmap of the input data is shown beneath the code</span>
+    imagesc(W1);colormap <span class="string">jet</span>;colorbar;
+    title(<span class="string">'Fig 1: Heatmap of -log transformed p-values of 90*90 matrix'</span>);
+    snapnow;
+
+    <span class="comment">% As comparison, we show the FDR multiple test adjustment result</span>
+    [FDR, Q] = mafdr(p1);
+    p1_fdr=p1;
+    p1_fdr(Q&gt;0.05)=1;
+
+    W1_fdr=squareform(-log(p1_fdr));
+    imagesc(W1_fdr);colormap <span class="string">jet</span>;colorbar;
+     title(<span class="string">'Fig 2:FDR results: heatmap of -log transformed p-values and only suprathreshold edges are kept'</span>);
+    snapnow;
+    <span class="comment">% The non-zero (not blue) points show differentially expressed</span>
+    <span class="comment">% connectivity edges by using FDR, and we note the results are</span>
+    <span class="comment">% scattered and show not topological pattern.</span>
+
+    <span class="comment">% Step 1.2 Rather than using FDR, we aim to detect hidden disease related commuity subnetworks</span>
+
+
+
+    <span class="comment">% SICERS is a function aims detects the hidden comuunity subnetworks,</span>
+
+
+    [Cindx,CID,Clist]=SICERS_A(squareform(W1),0.05,0,10);
+    <span class="comment">%Detected structure</span>
+    imagesc(W1(Clist,Clist));colormap <span class="string">jet</span>;colorbar;
+    title(<span class="string">'Fig 3:Community subnetwork in the heatmap'</span>);
+    snapnow     <span class="comment">%Detected community shown</span>
+    <span class="comment">% Note this figure only shuffles node order of the first figure</span>
+    <span class="comment">%</span>
+</pre><img vspace="5" hspace="5" src="example_code2_01.png" alt=""> <img vspace="5" hspace="5" src="example_code2_02.png" alt=""> <img vspace="5" hspace="5" src="example_code2_03.png" alt=""> <h2 id="2">Step 2: Testing community subnetwork</h2><p>The figure below shows the community detected by the SICERS_A function, and this part uses group label permutation test to test the significance of the community. The output P_SICERS shows the significance.</p><pre class="codeinput">    [signodeGEP,GEPstat,P_SICERS]=GLP_newstats_testonly(casedata_cor',ctrldata_cor',Cindx,CID,100);
+    P_SICERS
+</pre><pre class="codeoutput">
+P_SICERS =
+
+     0
+
+</pre><h2 id="3">Step 3: Refine detected community subnetwork, (refined topological structure)</h2><p>Given that the community detected in the previous part is significant(P_SICERS&lt;0.05), we further check if there exist any K-partite structure in it. The figure below shows the structure we detected.</p><pre class="codeinput">    W1_comm=W1(signodeGEP{1,1},signodeGEP{1,1});        <span class="comment">%If the first community has k-partite structure</span>
+    [Cindx_kpar,CID_kpar,Clist_kpar,T]=kpartite(squareform(W1_comm),0.05,0,10);
+    figure;imagesc(W1_comm(Clist_kpar,Clist_kpar))  <span class="comment">%Kpartite in community shown</span>
+    <span class="comment">%</span>
+    W1_reorder=W1(Clist,Clist);
+    comm_size=length(find(Cindx==CID(1)));
+    W1_reorder(1:comm_size,1:comm_size)=W1_comm(Clist_kpar,Clist_kpar);
+    imagesc(W1_reorder);colormap <span class="string">jet</span>;colorbar;
+    title(<span class="string">'Fig 4: K-partite subnetwork in the heatmap'</span>);
+    snapnow     <span class="comment">%Detected community shown</span>
+    <span class="comment">% Note this figure only shuffles node order of the first figure</span>
+    snapnow;
+    <span class="comment">%Kpartite in overall structure</span>
+    <span class="comment">%</span>
+</pre><img vspace="5" hspace="5" src="example_code2_04.png" alt=""> <h2 id="4">Step 4: Tesing refined topological structure</h2><p>KPGD algorithm is applied here to test the significance of the refined topology (here, k-partite for example) we find in the first section, and P_KPGD shows its signficance.</p><pre class="codeinput">    sig_network=W1(signodeGEP{1,1},signodeGEP{1,1});
+    signode_mark=squareform(zeros(size(casedata_cor,2),1));
+    signode_mark(signodeGEP{1,1},signodeGEP{1,1})=1;
+    <span class="keyword">for</span> i=1:length(signodeGEP{1,1})
+        signode_mark(signodeGEP{1,1}(i),signodeGEP{1,1}(i))=0;
+    <span class="keyword">end</span>
+    signode_mark=squareform(signode_mark);
+    <span class="comment">%</span>
+    sigedge_case=casedata_cor(:,signode_mark==1);
+    sigedge_ctrl=ctrldata_cor(:,signode_mark==1);
+    <span class="comment">%</span>
+    [sigKPGD,GLPKPGD,P_KPGD]=GEP_KPGD_testonly(sigedge_case',sigedge_ctrl',Cindx_kpar,CID_kpar,0.05,100);
+    P_KPGD
+    <span class="comment">%p-value&lt;0.01, that indicates that k-partite topological structure is valid (within the community structure)</span>
+</pre><pre class="codeoutput">
+P_KPGD =
+
+     0
+
+</pre><h2 id="5">Summary: we detected a hidden disease related subnetwork with oraganized topological structure (k-partite).</h2><pre class="codeinput">    <span class="comment">%The statistical tests are performed at the network level to provide</span>
+    <span class="comment">%formal statistical testing inference on the detected hidden and</span>
+    <span class="comment">%differentially expressed connectivity subnetworks.</span>
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% GLEN network detection and testing
+% Network object oriented statistics method is a new appraoch to detect and
+% test hidden phenotype related connectivity patterns at the "network"
+% level. 
+    %% Step 1: Community detection
+    
+    load('data.mat') 
+    % load the connectivity data for 60 subjects which include 30 cases and
+    % 30 matched controls. The first 90 AAL regions are used, and there are 4005 (90*(90-1)/2) edges
+    % for each subject. Each edge is continuous metric/number, e.g. Fisher's Z transformed correlation coefficients.
+    
+    %Step 1.1 two sample test on each edge
+   
+    [h1,p1]=ttest2(casedata_cor,ctrldata_cor); % here we simply use t-tests, but nonparametric tests could be used as well. 
+    %p1 is a vector of testing p-values
+     
+    W1=squareform(-log(p1)); % -log tranfom of p-values, thus a larger value indicates more group-wise difference.
+     
+    % Input data:the heatmap of the input data is shown beneath the code
+    imagesc(W1);colormap jet;colorbar;
+    title('Fig 1: Heatmap of -log transformed p-values of 90*90 matrix');
+    snapnow;
+    
+    % As comparison, we show the FDR multiple test adjustment result 
+    [FDR, Q] = mafdr(p1);
+    p1_fdr=p1;
+    p1_fdr(Q>0.05)=1;
+    
+    W1_fdr=squareform(-log(p1_fdr));
+    imagesc(W1_fdr);colormap jet;colorbar;
+     title('Fig 2:FDR results: heatmap of -log transformed p-values and only suprathreshold edges are kept');
+    snapnow;
+    % The non-zero (not blue) points show differentially expressed
+    % connectivity edges by using FDR, and we note the results are
+    % scattered and show not topological pattern.
+   
+    % Step 1.2 Rather than using FDR, we aim to detect hidden disease related commuity subnetworks 
+    
+    
+    
+    % SICERS is a function aims detects the hidden comuunity subnetworks, 
+    
+     
+    [Cindx,CID,Clist]=SICERS_A(squareform(W1),0.05,0,10);
+    %Detected structure
+    imagesc(W1(Clist,Clist));colormap jet;colorbar;
+    title('Fig 3:Community subnetwork in the heatmap');
+    snapnow     %Detected community shown
+    % Note this figure only shuffles node order of the first figure
+    %
+    %% Step 2: Testing community subnetwork
+    % The figure below shows the community detected by the SICERS_A function,
+    % and this part uses group label permutation test to test the
+    % significance of the community. The output P_SICERS shows the
+    % significance.
+    [signodeGEP,GEPstat,P_SICERS]=GLP_newstats_testonly(casedata_cor',ctrldata_cor',Cindx,CID,100);
+    P_SICERS
+    
+   
+    %% Step 3: Refine detected community subnetwork, (refined topological structure)
+    % Given that the community detected in the previous part is
+    % significant(P_SICERS<0.05), we further check if there exist any
+    % K-partite structure in it. The figure below shows the structure we
+    % detected.
+    W1_comm=W1(signodeGEP{1,1},signodeGEP{1,1});        %If the first community has k-partite structure
+    [Cindx_kpar,CID_kpar,Clist_kpar,T]=kpartite(squareform(W1_comm),0.05,0,10);
+    figure;imagesc(W1_comm(Clist_kpar,Clist_kpar))  %Kpartite in community shown
+    %
+    W1_reorder=W1(Clist,Clist);
+    comm_size=length(find(Cindx==CID(1)));
+    W1_reorder(1:comm_size,1:comm_size)=W1_comm(Clist_kpar,Clist_kpar);
+    imagesc(W1_reorder);colormap jet;colorbar;
+    title('Fig 4: K-partite subnetwork in the heatmap');
+    snapnow     %Detected community shown
+    % Note this figure only shuffles node order of the first figure
+    snapnow;                     
+    %Kpartite in overall structure
+    %
+    %% Step 4: Tesing refined topological structure
+    % KPGD algorithm is applied here to test the significance of the
+    % refined topology (here, k-partite for example) we find in the first section, and P_KPGD shows its
+    % signficance.
+    sig_network=W1(signodeGEP{1,1},signodeGEP{1,1});
+    signode_mark=squareform(zeros(size(casedata_cor,2),1));
+    signode_mark(signodeGEP{1,1},signodeGEP{1,1})=1;
+    for i=1:length(signodeGEP{1,1})
+        signode_mark(signodeGEP{1,1}(i),signodeGEP{1,1}(i))=0;
+    end
+    signode_mark=squareform(signode_mark);
+    %
+    sigedge_case=casedata_cor(:,signode_mark==1);
+    sigedge_ctrl=ctrldata_cor(:,signode_mark==1);
+    %
+    [sigKPGD,GLPKPGD,P_KPGD]=GEP_KPGD_testonly(sigedge_case',sigedge_ctrl',Cindx_kpar,CID_kpar,0.05,100);
+    P_KPGD
+    %p-value<0.01, that indicates that k-partite topological structure is valid (within the community structure) 
+    
+    %% Summary: we detected a hidden disease related subnetwork with oraganized topological structure (k-partite).
+    %The statistical tests are performed at the network level to provide
+    %formal statistical testing inference on the detected hidden and
+    %differentially expressed connectivity subnetworks.
+    
+##### SOURCE END #####
+--></body></html>
